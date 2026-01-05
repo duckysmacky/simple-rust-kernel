@@ -19,10 +19,10 @@ pub extern "C" fn _start() -> ! {
 }
 
 fn print_something() {
-    let color = ColorCode::new(Color::Yellow, Color::Black);
-    let mut writer = vga_buffer::Writer::new(color, 0xb8000);
+    use core::fmt::Write;
+    let mut writer = vga_buffer::WRITER.lock();
 
     writer.write_byte(b'H');
-    writer.write_string("ello ");
-    writer.write_string("Wörld!");
+    writer.write_string("ello, World!\n");
+    write!(writer, "The numers are {} and {}", 42, 1.5).unwrap();
 }
