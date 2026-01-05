@@ -2,6 +2,9 @@
 #![no_main]
 
 use core::panic::PanicInfo;
+use vga_buffer::{ColorCode, Color};
+
+mod vga_buffer;
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {
@@ -10,15 +13,16 @@ fn panic(_info: &PanicInfo) -> ! {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn _start() -> ! {
-    let vga_buffer = 0xb8000 as *mut u8;
-    let message = b"Hello, World!";
-
-    for (i, &byte) in message.iter().enumerate() {
-        unsafe {
-            *vga_buffer.offset(i as isize * 2) = byte;
-            *vga_buffer.offset(i as isize * 2 + 1) = 0xb;
-        }
-    }
+    print_something();
 
     loop {}
+}
+
+fn print_something() {
+    let color = ColorCode::new(Color::Yellow, Color::Black);
+    let mut writer = vga_buffer::Writer::new(color, 0xb8000);
+
+    writer.write_byte(b'H');
+    writer.write_string("ello ");
+    writer.write_string("Wörld!");
 }
