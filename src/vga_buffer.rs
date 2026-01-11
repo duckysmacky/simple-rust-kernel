@@ -164,14 +164,14 @@ mod tests {
     use super::*;
 
     #[test_case]
-    fn test_println_simple() {
-        println!("output");
+    fn test_println_single() {
+        println!("test_println_single output");
     }
 
     #[test_case]
     fn test_println_many() {
         for _ in 0..200 {
-            println!("output");
+            println!("test_println_many output");
         }
     }
 
