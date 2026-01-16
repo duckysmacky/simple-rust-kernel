@@ -8,8 +8,9 @@
 pub mod vga_buffer;
 pub mod serial;
 pub mod qemu;
+pub mod idt;
+pub mod gdt;
 mod testing;
-mod idt;
 
 pub use testing::{test_runner, test_panic_handler};
 
@@ -30,4 +31,5 @@ pub extern "C" fn _start() -> ! {
 
 pub fn init() {
     idt::init_idt();
+    gdt::init_gdt();
 }
