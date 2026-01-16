@@ -29,9 +29,11 @@ macro_rules! println {
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
     use core::fmt::Write;
-    if let Err(_) = WRITER.lock().write_fmt(args) {
-        unreachable!()
-    }
+    use x86_64::instructions::interrupts;
+
+    interrupts::without_interrupts(|| {
+        WRITER.lock().write_fmt(args).expect("Printing to VGA buffer failed");
+    });
 }
 
 #[allow(dead_code)]
@@ -177,12 +179,19 @@ mod tests {
 
     #[test_case]
     fn test_println_output() {
-        let text = "Some test string that fits on a single line";
-        println!("{}", text);
+        use core::fmt::Write;
+        use x86_64::instructions::interrupts;
 
-        for (i, c) in text.chars().enumerate() {
-            let screen_char = WRITER.lock().buffer.chars[BUFFER_HEIGHT - 2][i].read();
-            assert_eq!(char::from(screen_char.ascii_character), c);
-        }
+        let text = "Some test string that fits on a single line";
+
+        interrupts::without_interrupts(|| {
+            let mut writer = WRITER.lock();
+            writeln!(writer, "\n{}", text).expect("Failed to write to VGA buffer");
+
+            for (i, c) in text.chars().enumerate() {
+                let screen_char = writer.buffer.chars[BUFFER_HEIGHT - 2][i].read();
+                assert_eq!(char::from(screen_char.ascii_character), c);
+            }
+        });
     }
 }

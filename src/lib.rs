@@ -8,7 +8,7 @@
 pub mod vga_buffer;
 pub mod serial;
 pub mod qemu;
-pub mod idt;
+pub mod interrupts;
 pub mod gdt;
 mod testing;
 
@@ -30,6 +30,8 @@ pub extern "C" fn _start() -> ! {
 }
 
 pub fn init() {
-    idt::init_idt();
     gdt::init_gdt();
+    interrupts::init_idt();
+    interrupts::init_pics();
+    x86_64::instructions::interrupts::enable();
 }
