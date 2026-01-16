@@ -9,7 +9,7 @@ use kernel::{serial_println, serial_print};
 fn panic(_info: &PanicInfo) -> ! {
     serial_println!("[ok]");
     qemu::exit(QemuExitCode::Success);
-    loop {}
+    kernel::hlt_loop();
 }
 
 #[unsafe(no_mangle)]
@@ -17,7 +17,7 @@ pub extern "C" fn _start() -> ! {
     test_should_fail();
     serial_println!("[test did not panic]");
     qemu::exit(QemuExitCode::Failed);
-    loop {}
+    kernel::hlt_loop();
 }
 
 fn test_should_fail() {

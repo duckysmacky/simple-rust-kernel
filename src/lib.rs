@@ -26,7 +26,13 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
 pub extern "C" fn _start() -> ! {
     init();
     test_main();
-    loop {}
+    hlt_loop();
+}
+
+pub fn hlt_loop() -> ! {
+    loop {
+        x86_64::instructions::hlt();
+    }
 }
 
 pub fn init() {

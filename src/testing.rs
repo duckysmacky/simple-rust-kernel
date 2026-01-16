@@ -30,5 +30,5 @@ pub fn test_panic_handler(info: &core::panic::PanicInfo) -> ! {
     serial_println!("[failed]\n");
     serial_println!("Error: {}\n", info);
     qemu::exit(qemu::QemuExitCode::Failed);
-    loop {}
+    crate::hlt_loop();
 }
