@@ -1,4 +1,4 @@
-use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
+use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
 use spin::Mutex;
 use pic8259::ChainedPics;
 use lazy_static::lazy_static;
@@ -14,6 +14,8 @@ lazy_static! {
         let mut table = InterruptDescriptorTable::new();
 
         table.breakpoint.set_handler_fn(handle_breakpoint_exception);
+        table.page_fault.set_handler_fn(handle_page_fault_exception);
+
         unsafe {
             table.double_fault
                 .set_handler_fn(handle_double_fault_exception)
@@ -56,8 +58,21 @@ extern "x86-interrupt" fn handle_breakpoint_exception(stack_frame: InterruptStac
     println!("EXCEPTION: BREAKPOINT\n{:#?}", stack_frame);
 }
 
-extern "x86-interrupt" fn handle_double_fault_exception(stack_frame: InterruptStackFrame, _error_code: u64) -> ! {
-    panic!("EXCEPTION: DOUBLE FAULT\n{:#?}", stack_frame);
+extern "x86-interrupt" fn handle_page_fault_exception(stack_frame: InterruptStackFrame, error_code: PageFaultErrorCode) {
+    use x86_64::registers::control::Cr2;
+
+    println!("EXCEPTION: PAGE FAULT");
+    println!("Accessed Address: {:?}", Cr2::read());
+    println!("Error Code: {:?}", error_code);
+    println!("{:#?}", stack_frame);
+    crate::hlt_loop();
+}
+
+extern "x86-interrupt" fn handle_double_fault_exception(stack_frame: InterruptStackFrame, error_code: u64) -> ! {
+    println!("EXCEPTION: DOUBLE FAULT");
+    println!("Error Code: {:?}", error_code);
+    println!("{:#?}", stack_frame);
+    crate::hlt_loop();
 }
 
 extern "x86-interrupt" fn handle_timer_interrupt(_stack_frame: InterruptStackFrame) {
