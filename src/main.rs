@@ -5,6 +5,7 @@
 #![reexport_test_harness_main = "test_main"]
 
 use core::panic::PanicInfo;
+use bootloader::{BootInfo, entry_point};
 use kernel::println;
 
 #[cfg(not(test))]
@@ -20,19 +21,21 @@ fn panic(info: &PanicInfo) -> ! {
     kernel::test_panic_handler(info);
 }
 
-#[unsafe(no_mangle)]
-pub extern "C" fn _start() -> ! {
+entry_point!(kernel_main);
+
+fn kernel_main(boot_info: &'static BootInfo) -> ! {
+    use x86_64::VirtAddr;
+    use kernel::memory;
+
     kernel::init();
 
-    main();
+    let memory_offset = VirtAddr::new(boot_info.physical_memory_offset);
+    let mut _mapper = unsafe { memory::get_memory_mapper(memory_offset) };
+    let mut _allocator = unsafe { memory::BootInfoFrameAllocator::new(&boot_info.memory_map) };
+
     #[cfg(test)]
     test_main();
-
     kernel::hlt_loop();
-}
-
-fn main() {
-    println!("Hello, world!");
 }
 
 #[test_case]
