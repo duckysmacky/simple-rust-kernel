@@ -1,24 +1,31 @@
-use alloc::alloc::{GlobalAlloc, Layout};
+pub mod bump;
+
 use x86_64::structures::paging::mapper::MapToError;
 use x86_64::structures::paging::{FrameAllocator, Mapper, Size4KiB};
 use x86_64::VirtAddr;
-use linked_list_allocator::LockedHeap;
+use spin::{Mutex, MutexGuard};
+
+use crate::allocator::bump::BumpAllocator;
 
 pub const HEAP_START: usize = 0x4444_4444_0000;
 pub const HEAP_SIZE: usize = 100 * 1024;
 
 #[global_allocator]
-static ALLOCATOR: LockedHeap = LockedHeap::empty();
+static ALLOCATOR: Locked<BumpAllocator> = Locked::new(BumpAllocator::new());
 
-pub struct DummyAllocator;
+struct Locked<A> {
+    inner: Mutex<A>,
+}
 
-unsafe impl GlobalAlloc for DummyAllocator {
-    unsafe fn alloc(&self, _layout: Layout) -> *mut u8 {
-        core::ptr::null_mut()
+impl<A> Locked<A> {
+    pub const fn new(inner: A) -> Self {
+        Locked {
+            inner: Mutex::new(inner),
+        }
     }
 
-    unsafe fn dealloc(&self, _ptr: *mut u8, _layout: Layout) {
-        panic!("Dealloc should be never called")
+    pub fn lock<'a>(&'a self) -> MutexGuard<'a, A> {
+        self.inner.lock()
     }
 }
 
@@ -51,4 +58,11 @@ where
     }
 
     Ok(())
+}
+
+/// Align the given address `addr` upwards to alignment `align`.
+///
+/// Requires that `align` is a power of two.
+fn align_up(addr: usize, align: usize) -> usize {
+    (addr + align - 1) & !(align - 1)
 }
