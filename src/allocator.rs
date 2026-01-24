@@ -1,17 +1,17 @@
 pub mod bump;
+pub mod linked_list;
 
 use x86_64::structures::paging::mapper::MapToError;
 use x86_64::structures::paging::{FrameAllocator, Mapper, Size4KiB};
 use x86_64::VirtAddr;
 use spin::{Mutex, MutexGuard};
-
-use crate::allocator::bump::BumpAllocator;
+use crate::allocator::linked_list::LinkedListAllocator;
 
 pub const HEAP_START: usize = 0x4444_4444_0000;
 pub const HEAP_SIZE: usize = 100 * 1024;
 
 #[global_allocator]
-static ALLOCATOR: Locked<BumpAllocator> = Locked::new(BumpAllocator::new());
+static ALLOCATOR: Locked<LinkedListAllocator> = Locked::new(LinkedListAllocator::new());
 
 struct Locked<A> {
     inner: Mutex<A>,
